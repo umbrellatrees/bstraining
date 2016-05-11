@@ -1,5 +1,8 @@
 package com.base;
 
+import com.getbase.Client;
+import com.getbase.Configuration;
+import com.getbase.services.LeadsService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

@@ -15,6 +15,9 @@ import org.springframework.boot.test.WebIntegrationTest
 import spock.lang.Specification
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import static com.jayway.awaitility.Awaitility.await
+import static java.lang.Thread.sleep
+import static java.util.concurrent.TimeUnit.SECONDS
 
 @SpringApplicationConfiguration(classes = BsIntegrationSample.class)
 @WebIntegrationTest(randomPort = true)
@@ -36,22 +39,18 @@ class BsIntegrationSample extends Specification {
                 .list(new UsersService.SearchCriteria()
                 .email(AuthenticationProvider.SALES_EMAIL)).get(0)
 
-        User accountPerson = bsClient.users()
-                .list(new UsersService.SearchCriteria()
-                .email(AuthenticationProvider.ACCOUNT_EMAIL)).get(0)
         def suffix = LocalDateTime.now().format(DateTimeFormatter.ISO_TIME);
         Contact createdCompanyContact = companyForTest(salesRepPerson.id, suffix)
-        Contact createdContact = contractToCompany(salesRepPerson.id, createdCompanyContact.id, suffix)
 
-        sleep(80_000)
         expect:
-
+        await().atMost(15, SECONDS).until {
             bsClient
                     .deals()
                     .list(
                     new DealsService.SearchCriteria()
-                            .contactId(createdContact.id)
-                            .ownerId(accountPerson.id)).size() == 1
+                            .contactId(createdCompanyContact.id)
+                            .ownerId(salesRepPerson.id)).size() == 1
+        }
 
     }
 
@@ -61,22 +60,9 @@ class BsIntegrationSample extends Specification {
         companyContact.firstName = "Company firstName $suffix"
         companyContact.lastName = "Company lastName $suffix"
         companyContact.ownerId = salesRepId
+        companyContact.setIsOrganization(true)
         bsClient
                 .contacts()
                 .create(companyContact)
     }
-
-    private contractToCompany(Long salesRepId, Long companyId, String suffix) {
-        Contact contact = new Contact()
-        contact.name = "Contact name $suffix"
-        contact.firstName = "Contact firstName $suffix"
-        contact.lastName = "Contact lastName $suffix"
-        contact.ownerId = salesRepId
-        contact.contactId = companyId
-        bsClient
-                .contacts()
-                .create(contact)
-    }
-
-
 }
