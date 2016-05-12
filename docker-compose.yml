@@ -1,0 +1,11 @@
+bstraining:
+  build: .
+  links:
+    - mysql
+  ports:
+    - "80:80"
+
+mysql:
+  image: mysql:5.6
+  environment:
+     - MYSQL_ROOT_PASSWORD=xxx
